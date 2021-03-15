@@ -21,7 +21,7 @@ public class UI extends Frame {
 
     // The render method for the user interface
     public void paint(Graphics g) {
-        this.setSize(1500, 1000);
+        this.setSize(1400, 1000);
     }
 
     //  Main method required to initialize the app
