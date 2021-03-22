@@ -7,12 +7,12 @@ import java.awt.event.WindowEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.nio.Buffer;
 
 public class UI extends Frame {
     // **************** Variable declarations *********************//
     int width, height, padding;
     BufferedImage testImage;
+    BasicStroke stroke;
 
     // **************** End of Variable declarations **************//
 
@@ -32,6 +32,7 @@ public class UI extends Frame {
         }
 
         padding = 50;
+        stroke = new BasicStroke(0);
 
         //Anonymous inner-class listener to terminate program
         this.addWindowListener(
@@ -42,23 +43,6 @@ public class UI extends Frame {
                 }//end WindowAdapter
         );//end addWindowListener
     }
-
-    //convolve methods for averaging colors
-//    public void convolve(BufferedImage image, int dotRadius) {
-//        BufferedImage copy = new BufferedImage(width, height, image.getType());
-//
-//        for (int i = 1; i < copy.getWidth() - 1; i++) {
-//            for (int j = 1; j < copy.getHeight() - 1; j++) {
-//                int new_rgb = computeConvolve(
-//                        image.getRGB(i - 1, j - 1), image.getRGB(i, j - 1), image.getRGB(i + 1, j - 1),
-//                        image.getRGB(i - 1, j), image.getRGB(i, j), image.getRGB(i + 1, j),
-//                        image.getRGB(i - 1, j + 1), image.getRGB(i, j + 1), image.getRGB(i + 1, j + 1)
-//                );
-//                copy.setRGB(i, j, new_rgb);
-//            }
-//        }
-////        return copy;
-//    }
 
     // Compute convolve and return color variable
     private Color computeConvolve(int p1, int p2, int p3, int p4, int p5, int p6, int p7, int p8, int p9) {
@@ -81,8 +65,10 @@ public class UI extends Frame {
 
         int result = 0;
         for(int i = 0; i < filter.length; i++) {
-            result += filter[i] * values[i];
+            result += values[i];
         }
+        result /=9;
+
         if(result < 0)
             return 0;
         if(result > 255)
@@ -98,12 +84,15 @@ public class UI extends Frame {
 
         for (int i = 1; i < width; i+=dotRadius) {
             for (int j = 1; j < height; j+=dotRadius) {
-                dot = new Ellipse2D.Double(i+padding, j+padding, dotRadius, dotRadius);
+                // Dot position perturbations
+                int perturbX = (int)(Math.random()*6) - 3;
+                int perturbY = (int)(Math.random() * 6) - 3;
+                dot = new Ellipse2D.Double(i+padding+perturbX, j+padding+perturbY, dotRadius, dotRadius);
+
                 // Draw the dot
                 g2.draw(dot);
 
                 //Fill dot with averaged color in the original image where the dot will cover
-                //reference - week 3 lab code
                 Color new_rgb;
                 new_rgb = computeConvolve(
                         src.getRGB(i - 1, j - 1), src.getRGB(i, j - 1), src.getRGB(i + 1, j - 1),
@@ -111,8 +100,8 @@ public class UI extends Frame {
                         src.getRGB(i - 1, j + 1), src.getRGB(i, j + 1), src.getRGB(i + 1, j + 1)
                 );
 
-//                g2.setColor(new Color(new_rgb));
                 g2.setColor(new_rgb);
+                g2.setStroke(stroke);
                 g2.fill(dot);
             }
         }
@@ -145,10 +134,10 @@ public class UI extends Frame {
 //        Graphics2D g2 = (Graphics2D)g;
 
         // Display test Image
-        g.drawImage(testImage, 0+padding, 0+padding, width, height,this);
+//        g.drawImage(testImage, 0+padding, 0+padding, width, height,this);
 
 //        g.drawOval(padding,padding,10,10);
-        genDots(testImage,10,g);
+        genDots(testImage,15,g);
 
     }
 
