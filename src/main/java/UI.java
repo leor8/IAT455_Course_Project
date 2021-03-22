@@ -13,12 +13,12 @@ import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.File;
-import java.nio.Buffer;
 
 public class UI extends JFrame implements Runnable {
     // **************** Variable declarations *********************//
     int width, height, padding;
     BufferedImage testImage;
+    BasicStroke stroke;
 
 //    private MarvinVideoInterface videoAdapter;
 //    private MarvinImage imageIn, imageOut, imageBuffer;
@@ -58,6 +58,7 @@ public class UI extends JFrame implements Runnable {
         }
 
         padding = 50;
+        stroke = new BasicStroke(0);
 
         //Anonymous inner-class listener to terminate program
         this.addWindowListener(
@@ -68,23 +69,6 @@ public class UI extends JFrame implements Runnable {
                 }//end WindowAdapter
         );//end addWindowListener
     }
-
-    //convolve methods for averaging colors
-//    public void convolve(BufferedImage image, int dotRadius) {
-//        BufferedImage copy = new BufferedImage(width, height, image.getType());
-//
-//        for (int i = 1; i < copy.getWidth() - 1; i++) {
-//            for (int j = 1; j < copy.getHeight() - 1; j++) {
-//                int new_rgb = computeConvolve(
-//                        image.getRGB(i - 1, j - 1), image.getRGB(i, j - 1), image.getRGB(i + 1, j - 1),
-//                        image.getRGB(i - 1, j), image.getRGB(i, j), image.getRGB(i + 1, j),
-//                        image.getRGB(i - 1, j + 1), image.getRGB(i, j + 1), image.getRGB(i + 1, j + 1)
-//                );
-//                copy.setRGB(i, j, new_rgb);
-//            }
-//        }
-////        return copy;
-//    }
 
     // Compute convolve and return color variable
     private Color computeConvolve(int p1, int p2, int p3, int p4, int p5, int p6, int p7, int p8, int p9) {
@@ -103,14 +87,12 @@ public class UI extends JFrame implements Runnable {
 
     // Convolve kernel - calculate the average color within kernel
     private int computeConvolveChannel(int[] values) {
-        int[] filter = new int[]{1/9, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9};
-
         int result = 0;
-        for(int i = 0; i < filter.length; i++) {
+        for(int i = 0; i < values.length; i++) {
             result += values[i];
         }
-
         result /= 9;
+
         if(result < 0)
             return 0;
         if(result > 255)
@@ -124,22 +106,24 @@ public class UI extends JFrame implements Runnable {
         Ellipse2D.Double dot;
         Graphics2D g2 = (Graphics2D)g;
 
-        for (int i = 1; i < width; i+=dotRadius) {
-            for (int j = 1; j < height; j+=dotRadius) {
-                dot = new Ellipse2D.Double(i+padding, j+padding, dotRadius, dotRadius);
-                // Draw the dot
-                g2.draw(dot);
+        for (int i = 1; i < width; i++) {
+            for (int j = 1; j < height; j++) {
+                // Dot position perturbations
+                int perturbX = (int)(Math.random() * 6) - 3;
+                int perturbY = (int)(Math.random() * 6) - 3;
+                dot = new Ellipse2D.Double(i+padding+perturbX, j+padding+perturbY, dotRadius, dotRadius);
 
                 //Fill dot with averaged color in the original image where the dot will cover
-                //reference - week 3 lab code
                 Color new_rgb;
                 new_rgb = computeConvolve(
                         src.getRGB(i - 1, j - 1), src.getRGB(i, j - 1), src.getRGB(i + 1, j - 1),
                         src.getRGB(i - 1, j), src.getRGB(i, j), src.getRGB(i + 1, j),
                         src.getRGB(i - 1, j + 1), src.getRGB(i, j + 1), src.getRGB(i + 1, j + 1)
                 );
-//                g2.setColor(new Color(new_rgb));
                 g2.setColor(new_rgb);
+                g2.setStroke(stroke);
+                // Draw the dot
+                g2.draw(dot);
                 g2.fill(dot);
             }
         }
@@ -169,10 +153,9 @@ public class UI extends JFrame implements Runnable {
     // The render method for the user interface
     public void paint(Graphics g) {
         // Display test Image
-        g.drawImage(testImage, 0+padding, 0+padding, width, height,this);
+        g.drawImage(testImage, 800, 0+padding, width, height,this);
 
-        g.drawOval(padding,padding,10,10);
-        genDots(testImage,10,g);
+        genDots(testImage,15,g);
 
 //        while (inputVideo != null) {
 //            if (inputVideo.read(frames)) {
