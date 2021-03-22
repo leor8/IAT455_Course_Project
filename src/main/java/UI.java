@@ -106,8 +106,8 @@ public class UI extends JFrame implements Runnable {
         Ellipse2D.Double dot;
         Graphics2D g2 = (Graphics2D)g;
 
-        for (int i = 1; i < width; i++) {
-            for (int j = 1; j < height; j++) {
+        for (int i = 1; i < src.getWidth(); i+=dotRadius) {
+            for (int j = 1; j < src.getHeight(); j+=dotRadius) {
                 // Dot position perturbations
                 int perturbX = (int)(Math.random() * 6) - 3;
                 int perturbY = (int)(Math.random() * 6) - 3;
@@ -151,33 +151,36 @@ public class UI extends JFrame implements Runnable {
     }
 
     // The render method for the user interface
-    public void paint(Graphics g) {
+    public void paint(Graphics g) { ;
+
         // Display test Image
-        g.drawImage(testImage, 800, 0+padding, width, height,this);
-
-        genDots(testImage,15,g);
-
-//        while (inputVideo != null) {
-//            if (inputVideo.read(frames)) {
-//                // Getting a bufferedimage object from mat frame
-//                BufferedImage image = Mat2BufferedImage(frames);
-//
-//                // Draw the original image  on the left
-//                g.drawImage(image, 50, 200, width, height, this);
-//
-//                // Draw the updated image on the right
-//                BufferedImage modifiedImage = Mat2BufferedImage(frames);
-//                g.drawImage(modifiedImage, 600, 200, width, height, this);
-//                g.drawOval(600, 200,10,10);
-//                genDots(modifiedImage,10,g);
-//            }
-//
-//            //  If last frame detected, set the video to loop by reassigning the video file
-//            if(!inputVideo.grab()) {
-//                inputVideo = new VideoCapture("testVideo.wmv");
-//                print("new video loop");
-//            }
+//        if(testImage != null) {
+//            g.drawImage(testImage, width+30+padding, 0+padding, width, height,this);
+//            BufferedImage resizedImage  = resizeImage(testImage, width, height);
+//            genDots(resizedImage,10,g);
 //        }
+
+
+        while (inputVideo != null) {
+            if (inputVideo.read(frames)) {
+                // Getting a bufferedimage object from mat frame
+                BufferedImage image = Mat2BufferedImage(frames);
+
+                // Draw the original image  on the left
+                g.drawImage(image, 700, 50, width, height, this);
+
+                // Draw the updated image on the right
+                BufferedImage modifiedImage = Mat2BufferedImage(frames);
+                modifiedImage = resizeImage(modifiedImage, width, height);
+                genDots(modifiedImage,5,g);
+            }
+
+            //  If last frame detected, set the video to loop by reassigning the video file
+            if(!inputVideo.grab()) {
+                inputVideo = new VideoCapture("testVideo.wmv");
+                print("new video loop");
+            }
+        }
     }
 
     //  Main method required to initialize the app
@@ -213,5 +216,13 @@ public class UI extends JFrame implements Runnable {
         final byte[] targetPixels = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
         System.arraycopy(b, 0, targetPixels, 0, b.length);
         return image;
+    }
+
+    private BufferedImage resizeImage(BufferedImage src, int width, int height) {
+        // Function retrieved from https://www.baeldung.com/java-resize-image
+        Image result = src.getScaledInstance(width, height, Image.SCALE_DEFAULT);
+        BufferedImage outputImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        outputImage.getGraphics().drawImage(result, 0, 0, null);
+        return outputImage;
     }
 }
