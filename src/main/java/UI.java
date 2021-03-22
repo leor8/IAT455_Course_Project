@@ -25,8 +25,8 @@ public class UI extends Frame {
         // Load test image and video
         try{
             testImage = ImageIO.read(new File("testImage.jpg"));
-            width = testImage.getWidth()/2;
-            height = testImage.getHeight()/2;
+            width = testImage.getWidth();
+            height = testImage.getHeight();
         } catch (Exception e) {
             System.out.println("Error loading the images: " + e);
         }
@@ -130,11 +130,11 @@ public class UI extends Frame {
 
     // The render method for the user interface
     public void paint(Graphics g) {
-        this.setSize(1400, 1000);
+        this.setSize(1800, 1000);
 //        Graphics2D g2 = (Graphics2D)g;
 
         // Display test Image
-//        g.drawImage(testImage, 0+padding, 0+padding, width, height,this);
+        g.drawImage(testImage, width+30+padding, 0+padding, width/3, height/3,this);
 
 //        g.drawOval(padding,padding,10,10);
         genDots(testImage,15,g);
