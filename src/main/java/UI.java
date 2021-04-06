@@ -16,6 +16,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.File;
+import java.util.ArrayList;
 
 import static javax.swing.JOptionPane.showMessageDialog;
 
@@ -32,6 +33,7 @@ public class UI extends JFrame implements Runnable {
     int width, height, padding;
     BufferedImage testImage;
     BasicStroke stroke;
+    ArrayList<Point> dotPosition;
 
     // Placeholders for video
     Rectangle2D.Double video1, video2, video3;
@@ -78,6 +80,7 @@ public class UI extends JFrame implements Runnable {
 
         padding = 50;
         stroke = new BasicStroke(0);
+        dotPosition = new ArrayList<Point>();
 
         //Anonymous inner-class listener to terminate program
         this.addWindowListener(
@@ -119,7 +122,7 @@ public class UI extends JFrame implements Runnable {
         return result;
     }
 
-    // Generate the Dots
+    // Generate the Dots -- TURN INTO DOT CLASS --
     public void genDots(BufferedImage src, int dotRadius, Graphics g, int startX, int startY) {
 //        BufferedImage result = new BufferedImage(src.getWidth(), src.getHeight(), src.getType());
         Ellipse2D.Double dot;
@@ -131,6 +134,9 @@ public class UI extends JFrame implements Runnable {
                 int perturbX = (int)(Math.random() * 6) - 3;
                 int perturbY = (int)(Math.random() * 6) - 3;
                 dot = new Ellipse2D.Double(startX+i+padding+perturbX, startY+j+padding+perturbY, dotRadius, dotRadius);
+
+                //save dot position in arraylist
+                dotPosition.add(new Point(startX+i+padding+perturbX, startY+j+padding+perturbY));
 
                 //Fill dot with averaged color in the original image where the dot will cover
                 Color new_rgb;
