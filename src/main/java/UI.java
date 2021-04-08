@@ -16,6 +16,8 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.File;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 
 import static javax.swing.JOptionPane.showMessageDialog;
 
@@ -32,13 +34,23 @@ public class UI extends JFrame implements Runnable {
     int width, height, padding;
     BufferedImage testImage;
     BasicStroke stroke;
+    ArrayList<Point> dotPosition = new ArrayList<Point>();;
+    ArrayList<Dot> dotList = new ArrayList<Dot>();
 
     // Placeholders for video
     Rectangle2D.Double video1, video2, video3;
 
     private VideoCapture inputVideo;
+    private VideoCapture videoForProcessing;
     private Mat frames;
+    private Mat framesForProcessing;
+    private ArrayList<ArrayList<Dot>> dotLists = new ArrayList<>();
+    private boolean firstLoop = true;
+    private boolean loading = true;
+    private int dotListIndex = 0;
     private static FlowLayout flowLayout = new FlowLayout(FlowLayout.CENTER);
+
+    OpticalFlow of;
 
     // **************** End of Variable declarations **************//
 
@@ -67,8 +79,10 @@ public class UI extends JFrame implements Runnable {
             height = testImage.getHeight()/2;
 
             // Setting the attributes of test video
-//            inputVideo = new VideoCapture("testVideo.wmv");
+            inputVideo = new VideoCapture("aerial_traffic.mp4");
+            videoForProcessing = new VideoCapture("aerial_traffic.mp4");
             frames = new Mat();
+            framesForProcessing = new Mat();
 
             // Start the thread for requesting the video frames
             new Thread(this).start();
@@ -78,6 +92,10 @@ public class UI extends JFrame implements Runnable {
 
         padding = 50;
         stroke = new BasicStroke(0);
+        of = new OpticalFlow();
+
+        //while loop for processing video + for loop to generate initial dots *********
+
 
         //Anonymous inner-class listener to terminate program
         this.addWindowListener(
@@ -119,18 +137,26 @@ public class UI extends JFrame implements Runnable {
         return result;
     }
 
-    // Generate the Dots
-    public void genDots(BufferedImage src, int dotRadius, Graphics g, int startX, int startY) {
+    //need a create dot method - add new dots to dotlist ****** add all # for x and y before putting in constructor
+
+    // Generate the Dots -- TURN INTO DOT CLASS --
+    public void genDots(BufferedImage src, int dotRadius, Graphics g, int startX, int startY, Mat currentMat, Mat nextMat, boolean firstLoop) {
 //        BufferedImage result = new BufferedImage(src.getWidth(), src.getHeight(), src.getType());
         Ellipse2D.Double dot;
         Graphics2D g2 = (Graphics2D)g;
+        ArrayList<Dot> currentDots = new ArrayList<Dot>();
 
         for (int i = 1; i < src.getWidth(); i+=dotRadius) {
             for (int j = 1; j < src.getHeight(); j+=dotRadius) {
                 // Dot position perturbations
                 int perturbX = (int)(Math.random() * 6) - 3;
                 int perturbY = (int)(Math.random() * 6) - 3;
-                dot = new Ellipse2D.Double(startX+i+padding+perturbX, startY+j+padding+perturbY, dotRadius, dotRadius);
+                int finalX = startX+i+padding+perturbX;
+                int finalY = startY+j+padding+perturbY;
+                dot = new Ellipse2D.Double(finalX, finalY, dotRadius, dotRadius);
+
+                //save dot position in arraylist
+                dotPosition.add(new Point(startX+i+padding+perturbX, startY+j+padding+perturbY));
 
                 //Fill dot with averaged color in the original image where the dot will cover
                 Color new_rgb;
@@ -139,14 +165,23 @@ public class UI extends JFrame implements Runnable {
                         src.getRGB(i - 1, j), src.getRGB(i, j), src.getRGB(i + 1, j),
                         src.getRGB(i - 1, j + 1), src.getRGB(i, j + 1), src.getRGB(i + 1, j + 1)
                 );
-                g2.setColor(new_rgb);
-                g2.setStroke(stroke);
-                // Draw the dot
-                g2.draw(dot);
-                g2.fill(dot);
+                currentDots.add(new Dot(finalX, finalY, dotRadius, new_rgb));
+//                g2.setColor(new_rgb);
+//                g2.setStroke(stroke);
+//                // Draw the dot
+//                g2.draw(dot);
+//                g2.fill(dot);
             }
         }
 
+        // Call optical flow
+        ArrayList<Dot> nextDots = of.calcOptFlow(currentMat, nextMat, currentDots, (int)(startX + dotRadius/2 + padding),
+                (int)(startY + dotRadius/2 + padding), (int)(startX + videoWidth - dotRadius/2 + padding),
+                (int)(startY + videoHeight - dotRadius/2 +padding));
+        if(firstLoop) {
+            dotLists.add(currentDots);
+        }
+        dotLists.add(nextDots);
     }
 
     //Getters for Color
@@ -179,6 +214,8 @@ public class UI extends JFrame implements Runnable {
 //            genDots(resizedImage,10,g);
 //        }
 
+        // Do i turn this into a method and put it at the top to generate dots once,
+        // and here again to keep calculating optical flow + moving dots?
         while (inputVideo != null) {
             if (inputVideo.read(frames)) {
                 // Getting a bufferedimage object from mat frame
@@ -188,15 +225,34 @@ public class UI extends JFrame implements Runnable {
                 g.drawImage(image, 800, 130, videoWidth, videoHeight, this);
 
                 // Draw the updated image on the right
-                BufferedImage modifiedImage = Mat2BufferedImage(frames);
-                modifiedImage = resizeImage(modifiedImage, videoWidth, videoHeight);
-                genDots(modifiedImage,5,g, 150, 85);
+                if(loading) {
+                    BufferedImage modifiedImage = Mat2BufferedImage(frames);
+                    modifiedImage = resizeImage(modifiedImage, videoWidth, videoHeight);
+                    Mat currentMat = frames;
+
+                    videoForProcessing.read(framesForProcessing);
+                    Mat nextMat = framesForProcessing;
+                    //Draw dots
+                    if(nextMat != null) {
+                        genDots(modifiedImage,5,g, 150, 85, currentMat, nextMat, this.firstLoop);
+                    }
+                    firstLoop = false;
+                } else {
+                     ArrayList<Dot> currList = dotLists.get(dotListIndex);
+                     for(int i = 0; i < currList.size();  i++) {
+                         currList.get(i).draw(g2);
+                     }
+                    dotListIndex++;
+                }
+
             }
 
             //  If last frame detected, set the video to loop by reassigning the video file
             if(!inputVideo.grab()) {
-                inputVideo = new VideoCapture("testVideo.wmv");
-                print("new video loop");
+                inputVideo = new VideoCapture("aerial_traffic.mp4");
+                loading = false;
+                dotListIndex = 0;
+                System.out.println(dotLists.size());
             }
         }
 
@@ -263,6 +319,11 @@ public class UI extends JFrame implements Runnable {
                     try {
                         // Setting the attributes of test video
                         inputVideo = new VideoCapture(file.getPath());
+                        videoForProcessing = new VideoCapture(file.getPath());
+                        videoForProcessing.read(framesForProcessing);
+                        //generate first set of dots here
+                        //genDots(videoForProcessing, 5, 150, 85);
+
                         repaint();
                     } catch (Exception error) {
                         print(error.getMessage());
