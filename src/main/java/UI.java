@@ -13,14 +13,12 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.File;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 
 import static javax.swing.JOptionPane.showMessageDialog;
 
 public class UI extends JFrame{
-
-    // **************** Variable declarations *********************//
-    JFrame frame;
-
     // **************** End of Variable declarations **************//
 
     static{ System.loadLibrary(Core.NATIVE_LIBRARY_NAME); }
