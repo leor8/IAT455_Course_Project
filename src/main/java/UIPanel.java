@@ -11,10 +11,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Hashtable;
 
 import static javax.swing.JOptionPane.showMessageDialog;
 
@@ -42,8 +40,7 @@ public class UIPanel extends JPanel implements ActionListener, ChangeListener {
     JButton buttonStart;
     JSlider radiusSlider;
 
-    ArrayList<Point> dotPosition = new ArrayList<Point>();;
-    ArrayList<Dot> dotList = new ArrayList<Dot>();
+    ArrayList<Point> dotPosition = new ArrayList<Point>();
 
     private int dotRadiusSelected = DEFAULT_RADIUS_VAL;
 
@@ -56,7 +53,7 @@ public class UIPanel extends JPanel implements ActionListener, ChangeListener {
     public UIPanel(int width, int height) {
         this.setPreferredSize(new Dimension(width, height));
 
-        buttonStart = new JButton("Upload start Image");
+        buttonStart = new JButton("Upload Start Video");
         buttonStart.setBounds(20,140,150,30);
         this.setUpButtonClick(); // Calling defined method to setup button's action performed method
 //        buttonStart.setLayout(null); // Allow buttons position and size to be modified through setBounds
@@ -128,6 +125,7 @@ public class UIPanel extends JPanel implements ActionListener, ChangeListener {
                     g.drawString("Original Video", 140, 80);
                     g.drawString("Processed Video with default radius", 700, 80);
                     g.drawString("Processed Video with customized radius", 450, 420);
+
                     ArrayList<Dot> currList = dotLists.get(dotListIndex);
                     for(int i = 0; i < currList.size();  i++) {
                         currList.get(i).draw(g2);
@@ -156,13 +154,9 @@ public class UIPanel extends JPanel implements ActionListener, ChangeListener {
         repaint();
     }
 
-    //need a create dot method - add new dots to dotlist ****** add all # for x and y before putting in constructor
-
-    // Generate the Dots -- TURN INTO DOT CLASS --
-    public void genDots(BufferedImage src, int dotRadius, Graphics g, int startX, int startY, Mat currentMat, Mat nextMat, boolean firstLoop, boolean recordDotPos) {
-//        BufferedImage result = new BufferedImage(src.getWidth(), src.getHeight(), src.getType());
-        Ellipse2D.Double dot;
-        Graphics2D g2 = (Graphics2D)g;
+    // Generate the Dots
+    public void genDots(BufferedImage src, int dotRadius, Graphics g, int startX, int startY,
+                        Mat currentMat, Mat nextMat, boolean firstLoop, boolean recordDotPos) {
         ArrayList<Dot> currentDots = new ArrayList<Dot>();
 
         for (int i = 1; i < src.getWidth(); i+=dotRadius) {
@@ -172,10 +166,9 @@ public class UIPanel extends JPanel implements ActionListener, ChangeListener {
                 int perturbY = (int)(Math.random() * 6) - 3;
                 int finalX = startX+i+padding+perturbX;
                 int finalY = startY+j+padding+perturbY;
-                dot = new Ellipse2D.Double(finalX, finalY, dotRadius, dotRadius);
 
                 //save dot position in arraylist
-                dotPosition.add(new Point(startX+i+padding+perturbX, startY+j+padding+perturbY));
+                dotPosition.add(new Point(finalX, finalY));
 
                 //Fill dot with averaged color in the original image where the dot will cover
                 Color new_rgb;
@@ -185,24 +178,20 @@ public class UIPanel extends JPanel implements ActionListener, ChangeListener {
                         src.getRGB(i - 1, j + 1), src.getRGB(i, j + 1), src.getRGB(i + 1, j + 1)
                 );
                 currentDots.add(new Dot(finalX, finalY, dotRadius, new_rgb));
-//                g2.setColor(new_rgb);
-//                g2.setStroke(stroke);
-//                // Draw the dot
-//                g2.draw(dot);
-//                g2.fill(dot);
             }
         }
 
         // Call optical flow
-        ArrayList<Dot> nextDots = of.calcOptFlow(currentMat, nextMat, currentDots, (int)(startX + dotRadius/2 + padding),
-                (int)(startY + dotRadius/2 + padding), (int)(startX + VIDEO_WIDTH - dotRadius/2 + padding),
-                (int)(startY + VIDEO_HEIGHT - dotRadius/2 +padding));
-        if(firstLoop && recordDotPos) {
+        ArrayList<Dot> nextDots = of.calcOptFlow(currentMat, nextMat, currentDots, (int) (startX + dotRadius / 2 + padding),
+                (int) (startY + dotRadius / 2 + padding), (int) (startX + VIDEO_WIDTH - dotRadius / 2 + padding),
+                (int) (startY + VIDEO_HEIGHT - dotRadius / 2 + padding));
+        if (firstLoop && recordDotPos) {
             dotLists.add(currentDots);
         }
-        if(recordDotPos) {
+        if (recordDotPos) {
             dotLists.add(nextDots);
         }
+
     }
 
     private void setUpButtonClick() {
