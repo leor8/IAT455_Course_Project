@@ -22,8 +22,9 @@ public class UIPanel extends JPanel implements ActionListener, ChangeListener {
     // **************** Constants declarations *********************//
     final int VIDEO_WIDTH = 540;
     final int VIDEO_HEIGHT = 300;
-    final int RADIUS_MIN = 5;
-    final int RADIUS_MAX = 15;
+    final int RADIUS_MIN = 9;
+    final int RADIUS_MAX = 17;
+    final int DEFAULT_RADIUS_VAL = 9;
     // **************** End of Constants declarations **************//
     private VideoCapture videoFileForReference;
     private VideoCapture inputVideo;
@@ -44,7 +45,7 @@ public class UIPanel extends JPanel implements ActionListener, ChangeListener {
     ArrayList<Point> dotPosition = new ArrayList<Point>();;
     ArrayList<Dot> dotList = new ArrayList<Dot>();
 
-    private int dotRadiusSelected = 5;
+    private int dotRadiusSelected = DEFAULT_RADIUS_VAL;
 
     private Timer timer;
     private int padding;
@@ -61,7 +62,7 @@ public class UIPanel extends JPanel implements ActionListener, ChangeListener {
 //        buttonStart.setLayout(null); // Allow buttons position and size to be modified through setBounds
         add(buttonStart);
 
-        radiusSlider = new JSlider(JSlider.HORIZONTAL, RADIUS_MIN, RADIUS_MAX, 5);
+        radiusSlider = new JSlider(JSlider.HORIZONTAL, RADIUS_MIN, RADIUS_MAX, DEFAULT_RADIUS_VAL);
         radiusSlider.setPaintTicks(true);
         radiusSlider.setPaintLabels(true);
         radiusSlider.setPaintTrack(true);
@@ -119,7 +120,7 @@ public class UIPanel extends JPanel implements ActionListener, ChangeListener {
                     Mat nextMat = framesForProcessing;
                     //Loading dots
                     if(nextMat != null) {
-                        genDots(modifiedImage,5,g, 650, 37, currentMat, nextMat, this.firstLoop, true);
+                        genDots(modifiedImage,9,g, 650, 37, currentMat, nextMat, this.firstLoop, true);
                         genDots(modifiedImage, dotRadiusSelected, g, 400, 45 + VIDEO_HEIGHT + 40, currentMat, nextMat, this.firstLoop, false);
                     }
                     firstLoop = false;
