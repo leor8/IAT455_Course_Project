@@ -9,7 +9,6 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
@@ -24,7 +23,8 @@ public class UIPanel extends JPanel implements ActionListener, ChangeListener {
     final int RADIUS_MAX = 17;
     final int DEFAULT_RADIUS_VAL = 9;
     // **************** End of Constants declarations **************//
-    private VideoCapture videoFileForReference;
+
+    // **************** Variable declarations *********************//
     private VideoCapture inputVideo;
     private VideoCapture videoForProcessing;
     private Mat frames;
@@ -50,13 +50,18 @@ public class UIPanel extends JPanel implements ActionListener, ChangeListener {
 
     private ImageManipulator im;
 
+    private File fileReference;
+
+    // **************** End of variable declarations *********************//
+
     public UIPanel(int width, int height) {
+        // Set the size of the canvas
         this.setPreferredSize(new Dimension(width, height));
 
+        // Set up ui elements (button and radius)
         buttonStart = new JButton("Upload Start Video");
         buttonStart.setBounds(20,140,150,30);
         this.setUpButtonClick(); // Calling defined method to setup button's action performed method
-//        buttonStart.setLayout(null); // Allow buttons position and size to be modified through setBounds
         add(buttonStart);
 
         radiusSlider = new JSlider(JSlider.HORIZONTAL, RADIUS_MIN, RADIUS_MAX, DEFAULT_RADIUS_VAL);
@@ -66,6 +71,10 @@ public class UIPanel extends JPanel implements ActionListener, ChangeListener {
         radiusSlider.addChangeListener(this);
 
         add(radiusSlider);
+
+        // Set Mat holders
+        frames = new Mat();
+        framesForProcessing = new Mat();
 
         // Set up timer for frame render
         timer = new Timer(1, this);
@@ -79,15 +88,7 @@ public class UIPanel extends JPanel implements ActionListener, ChangeListener {
         // Initialize the image manipulation helper method
         im = new ImageManipulator();
 
-        // Load test image and video
-        try{
-            // Setting the attributes of test video
-//            inputVideo = new VideoCapture("testVideo.wmv");
-            frames = new Mat();
-            framesForProcessing = new Mat();
-        } catch (Exception e) {
-            System.out.println("Error loading the images: " + e);
-        }
+
     }
 
     @Override
@@ -123,13 +124,19 @@ public class UIPanel extends JPanel implements ActionListener, ChangeListener {
                     firstLoop = false;
                 } else {
                     g.drawString("Original Video", 140, 80);
-                    g.drawString("Processed Video with default radius", 700, 80);
-                    g.drawString("Processed Video with customized radius", 450, 420);
+                    g.drawString("Filtered Video with customized radius", 700, 80);
+                    g.drawString("First Frame filtered as intermediate result", 450, 420);
 
+                    // Only display the first frame as intermediate result
+                    ArrayList<Dot> firstFrame = dotLists.get(0);
+                    for(int i = 0; i < firstFrame.size(); i++) {
+                        firstFrame.get(i).drawCustomizedDot(g2, -250, VIDEO_HEIGHT + 40, 14);
+                    }
+
+                    // Display the filtered result with customized dot size
                     ArrayList<Dot> currList = dotLists.get(dotListIndex);
                     for(int i = 0; i < currList.size();  i++) {
-                        currList.get(i).draw(g2);
-                        currList.get(i).drawCustomizedDot(g2, -250, VIDEO_HEIGHT + 40, dotRadiusSelected);
+                        currList.get(i).drawCustomizedDot(g2, 0, 0, dotRadiusSelected);
                     }
                     dotListIndex++;
                 }
@@ -138,14 +145,15 @@ public class UIPanel extends JPanel implements ActionListener, ChangeListener {
 
             //  If last frame detected, set the video to loop by reassigning the video file
             if(!inputVideo.grab()) {
-                inputVideo = videoFileForReference;
+                System.out.println("Reload");
+                inputVideo = new VideoCapture(fileReference.getPath());
                 loading = false;
                 dotListIndex = 0;
             }
         }
 
         if(inputVideo == null) {
-            g.drawString("Upload your video through the button on the left", 550, 100);
+            g.drawString("Upload your video through the button on top", 550, 100);
         }
     }
 
@@ -194,6 +202,7 @@ public class UIPanel extends JPanel implements ActionListener, ChangeListener {
 
     }
 
+    // Button binding function to make code less messy
     private void setUpButtonClick() {
         buttonStart.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -203,16 +212,14 @@ public class UIPanel extends JPanel implements ActionListener, ChangeListener {
                 if (returnValStart == JFileChooser.APPROVE_OPTION) {
                     File file = fc.getSelectedFile();
                     try {
-                        // Setting the attributes of test video
-                        videoFileForReference = new VideoCapture(file.getPath());
+                        // Setting the attributes of input video
+                        fileReference = file;
                         inputVideo = new VideoCapture(file.getPath());
                         videoForProcessing = new VideoCapture(file.getPath());
                         videoForProcessing.read(framesForProcessing);
-                        System.out.println("video inputed");
                         repaint();
                     } catch (Exception error) {
-                        System.out.println(error.getMessage());
-//                        showMessageDialog(null, "Unable to translate the input file into a readable file. Please reupload!");
+                        showMessageDialog(null, "Unable to translate the input file into a readable file. Please reupload!");
                     }
                 } else {
                     showMessageDialog(null, "Unable to read the file, please try again!");
@@ -222,6 +229,7 @@ public class UIPanel extends JPanel implements ActionListener, ChangeListener {
     }
 
     public void stateChanged(ChangeEvent e) {
+        // State change method to detect slider  change
         dotRadiusSelected = radiusSlider.getValue();
     }
 }

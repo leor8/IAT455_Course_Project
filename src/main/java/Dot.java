@@ -26,6 +26,7 @@ public class Dot {
         g2.fill(dot);
     }
 
+    // Draw dot at desired location with radius
     public void drawCustomizedDot(Graphics g, int xOffset,  int yOffset, int radius) {
         Ellipse2D.Double newDot = new Ellipse2D.Double(this.x + xOffset, this.y + yOffset, radius, radius);
         Graphics2D g2 = (Graphics2D)g;
@@ -36,6 +37,7 @@ public class Dot {
         g2.fill(newDot);
     }
 
+    // Helper functions
     public int getX() {
         return this.x;
     }

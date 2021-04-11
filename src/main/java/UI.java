@@ -1,22 +1,7 @@
 package main.java;
 
 import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.videoio.VideoCapture;
-
-import javax.imageio.ImageIO;
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
-import java.io.File;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-
-import static javax.swing.JOptionPane.showMessageDialog;
 
 public class UI extends JFrame{
     // **************** End of Variable declarations **************//
