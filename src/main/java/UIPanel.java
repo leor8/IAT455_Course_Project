@@ -217,6 +217,12 @@ public class UIPanel extends JPanel implements ActionListener, ChangeListener {
                         inputVideo = new VideoCapture(file.getPath());
                         videoForProcessing = new VideoCapture(file.getPath());
                         videoForProcessing.read(framesForProcessing);
+
+                        // If a new file is inputted
+                        dotLists = new ArrayList<>();
+                        firstLoop = true;
+                        loading = true;
+                        dotListIndex = 0;
                         repaint();
                     } catch (Exception error) {
                         showMessageDialog(null, "Unable to translate the input file into a readable file. Please reupload!");
